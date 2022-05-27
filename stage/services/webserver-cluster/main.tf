@@ -2,18 +2,57 @@ provider "aws" {
   region = "us-east-1"
 }
 
-variable "server_port" {
-  description = "port for HTTP requests"
-  default = 8080
+terraform {
+  backend "s3" {
+    bucket  = "terraform-up-and-running-state-danslam-services"
+    dynamodb_table = "dynamo_lock_table_services"
+    region  = "us-east-1"
+    key     = "terraform.tfstate"
+    encrypt = true
+  }
 }
 
-variable "elb_port" {
-  description = "port for ELB requests"
-  default = 80
+resource "aws_s3_bucket" "terraform_state" {
+  bucket = "terraform-up-and-running-state-danslam-services"
+
+  versioning {
+    enabled = true
+  }
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
-output "elb_dns_name" {
-  value = "${aws_elb.example.dns_name}"
+# Enable server-side encryption by default
+resource "aws_s3_bucket_server_side_encryption_configuration" "default" {
+  bucket = aws_s3_bucket.terraform_state.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
+  }
+}
+
+# Explicitly block all public access to the S3 bucket
+resource "aws_s3_bucket_public_access_block" "public_access" {
+  bucket                  = aws_s3_bucket.terraform_state.id
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+resource "aws_dynamodb_table" "terraform_locks" {
+  name         = var.table_name
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "LockID"
+
+  attribute {
+    name = "LockID"
+    type = "S"
+  }
 }
 
 # Declare the data source

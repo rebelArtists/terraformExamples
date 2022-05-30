@@ -12,6 +12,26 @@ terraform {
   }
 }
 
+data "terraform_remote_state" "db" {
+  backend = "s3"
+
+  config = {
+    bucket = "terraform-up-and-running-state-danslam-data-stores"
+    key = "terraform.tfstate"
+    region = "us-east-1"
+  }
+}
+
+data "template_file" "user_data" {
+  template = "${file("user-data.sh")}"
+
+  vars = {
+    server_port = "${var.server_port}"
+    db_address = "${data.terraform_remote_state.db.outputs.address}"
+    db_port = "${data.terraform_remote_state.db.outputs.port}"
+  }
+}
+
 resource "aws_s3_bucket" "terraform_state" {
   bucket = "terraform-up-and-running-state-danslam-services"
 
@@ -59,6 +79,7 @@ resource "aws_dynamodb_table" "terraform_locks" {
 data "aws_availability_zones" "all" {}
 
 resource "aws_autoscaling_group" "example" {
+  name = "${aws_launch_configuration.example.name}-cluster"
   launch_configuration = "${aws_launch_configuration.example.id}"
   availability_zones = "${data.aws_availability_zones.all.names}"
 
@@ -67,12 +88,18 @@ resource "aws_autoscaling_group" "example" {
 
   min_size = 2
   max_size = 10
+  min_elb_capacity = 2
 
   tag {
     key = "Name"
-    value = "terraform-asg-example"
+    value = "asg-example"
     propagate_at_launch = true
   }
+
+  lifecycle {
+    create_before_destroy = true
+  }
+
 }
 
 resource "aws_security_group" "elb" {
@@ -133,12 +160,7 @@ resource "aws_launch_configuration" "example" {
   image_id = "ami-07ebfd5b3428b6f4d"
   instance_type = "t2.micro"
   security_groups = ["${aws_security_group.instance.id}"]
-
-  user_data = <<-EOF
-              #!/bin/bash
-              echo "Hello, World" > index.html
-              nohup busybox httpd -f -p 8080 &
-              EOF
+  user_data = "${data.template_file.user_data.rendered}"
 
   lifecycle {
     create_before_destroy = true

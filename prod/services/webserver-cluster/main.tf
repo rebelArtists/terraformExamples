@@ -4,15 +4,15 @@ provider "aws" {
 
 terraform {
   backend "s3" {
-    bucket  = "terraform-webservers-stage"
-    dynamodb_table = "webserver_state_lock_stage"
+    bucket  = "terraform-webservers-prod"
+    dynamodb_table = "webserver_state_lock_prod"
     region  = "us-east-1"
     key     = "terraform.tfstate"
     encrypt = true
   }
 }
 
-module "webserver_cluster_stage" {
+module "webserver_cluster_prod" {
   source = "../../../modules/services/webserver-cluster"
 
   cluster_name = "${var.cluster_name}"

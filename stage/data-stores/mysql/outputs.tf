@@ -1,7 +1,7 @@
 output "address" {
-  value = "${aws_db_instance.example.address}"
+  value = "${module.datastore_cluster_stage.address}"
 }
 
 output "port" {
-  value = "${aws_db_instance.example.port}"
+  value = "${module.datastore_cluster_stage.port}"
 }

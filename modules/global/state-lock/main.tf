@@ -2,18 +2,8 @@ provider "aws" {
   region = "us-east-1"
 }
 
-terraform {
-  backend "s3" {
-    bucket  = "terraform-up-and-running-state-danslam"
-    dynamodb_table = "dynamo_lock_table"
-    region  = "us-east-1"
-    key     = "terraform.tfstate"
-    encrypt = true
-  }
-}
-
 resource "aws_s3_bucket" "terraform_state" {
-  bucket = "terraform-up-and-running-state-danslam"
+  bucket = "${var.state_bucket_name}"
 
   versioning {
     enabled = true
@@ -45,7 +35,7 @@ resource "aws_s3_bucket_public_access_block" "public_access" {
 }
 
 resource "aws_dynamodb_table" "terraform_locks" {
-  name         = var.table_name
+  name         = var.dynamo_table_name
   billing_mode = "PAY_PER_REQUEST"
   hash_key     = "LockID"
 

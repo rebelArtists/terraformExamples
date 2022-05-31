@@ -13,7 +13,7 @@ data "terraform_remote_state" "db" {
 }
 
 data "template_file" "user_data" {
-  template = "${file("user-data.sh")}"
+  template = "${file("${path.module}/user-data.sh")}"
 
   vars = {
     server_port = "${var.server_port}"
@@ -33,8 +33,8 @@ resource "aws_autoscaling_group" "example" {
   load_balancers = ["${aws_elb.example.name}"]
   health_check_type = "ELB"
 
-  min_size = 2
-  max_size = 10
+  min_size = "${var.min_size}"
+  max_size = "${var.max_size}"
   min_elb_capacity = 2
 
   tag {
@@ -51,20 +51,24 @@ resource "aws_autoscaling_group" "example" {
 
 resource "aws_security_group" "elb" {
   name = "${var.cluster_name}-elb"
+}
 
-  ingress {
-    from_port = "${var.elb_port}"
-    to_port = "${var.elb_port}"
-    protocol = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+resource "aws_security_group_rule" "allow_http_inbound" {
+  type = "ingress"
+  security_group_id = "${aws_security_group.elb.id}"
+  from_port = "${var.elb_port}"
+  to_port = "${var.elb_port}"
+  protocol = "tcp"
+  cidr_blocks = ["0.0.0.0/0"]
+}
 
-  egress {
-    from_port = 0
-    to_port = 0
-    protocol = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+resource "aws_security_group_rule" "allow_all_outbound" {
+  type = "egress"
+  security_group_id = "${aws_security_group.elb.id}"
+  from_port = 0
+  to_port = 0
+  protocol = "-1"
+  cidr_blocks = ["0.0.0.0/0"]
 }
 
 resource "aws_elb" "example" {
@@ -105,7 +109,7 @@ resource "aws_security_group" "instance" {
 
 resource "aws_launch_configuration" "example" {
   image_id = "ami-07ebfd5b3428b6f4d"
-  instance_type = "t2.micro"
+  instance_type = "${var.instance_type}"
   security_groups = ["${aws_security_group.instance.id}"]
   user_data = "${data.template_file.user_data.rendered}"
 

@@ -19,3 +19,15 @@ variable "db_remote_state_bucket" {
 variable "db_remote_state_key" {
   description = "s3 key for db remote state file"
 }
+
+variable "instance_type" {
+  description = "ec2 instance type"
+}
+
+variable "min_size" {
+  description = "minimum number of servers in cluster"
+}
+
+variable "max_size" {
+  description = "max servers in cluster"
+}

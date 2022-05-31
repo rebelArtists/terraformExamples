@@ -13,7 +13,7 @@ terraform {
 }
 
 module "webserver_cluster_prod" {
-  source = "../../../modules/services/webserver-cluster"
+  source = "../../../../modules/services/webserver-cluster"
 
   cluster_name = "webserver-cluster-prod"
   db_remote_state_bucket = "terraform-data-stores-prod"
@@ -40,4 +40,6 @@ resource "aws_autoscaling_schedule" "scale_in_night" {
   max_size = 10
   desired_capacity = 2
   recurrence = "0 17 * * *"
+
+  autoscaling_group_name = "${module.webserver_cluster_prod.asg_name}"
 }

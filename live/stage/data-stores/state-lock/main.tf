@@ -3,7 +3,7 @@ provider "aws" {
 }
 
 module "state-lock-data-stores-stage" {
-  source = "../../../modules/global/state-lock"
+  source = "../../../../modules/global/state-lock"
 
   dynamo_table_name = "data_stores_state_lock_stage"
   state_bucket_name = "terraform-data-stores-stage"

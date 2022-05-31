@@ -13,7 +13,7 @@ terraform {
 }
 
 module "datastore_cluster_prod" {
-  source = "../../../modules/data-stores/mysql"
+  source = "../../../../modules/data-stores/mysql"
 
   db_password = "testing123"
   mysql_db_name = "example_db_prod"

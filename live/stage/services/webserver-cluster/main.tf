@@ -13,7 +13,7 @@ terraform {
 }
 
 module "webserver_cluster_stage" {
-  source = "../../../modules/services/webserver-cluster"
+  source = "../../../../modules/services/webserver-cluster"
 
   cluster_name = "webserver-cluster-stage"
   db_remote_state_bucket = "terraform-data-stores-stage"
@@ -27,7 +27,6 @@ module "webserver_cluster_stage" {
 resource "aws_security_group_rule" "allow_testing_inbound" {
   type = "ingress"
   security_group_id = "${module.webserver_cluster_stage.security_group_id}"
-
   from_port = 12345
   to_port = 12345
   protocol = "tcp"
